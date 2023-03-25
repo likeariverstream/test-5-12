@@ -1,98 +1,76 @@
-import ReactDOM from 'react-dom/client';
+import React, { useState } from 'react'
+import ReactDOM from 'react-dom'
 
-import React, { ChangeEventHandler, FormEventHandler, FC } from 'react';
+const params = [
+  { "id": 1, "name": "Назначение" },
+  { "id": 2, "name": "Длина" }
+]
 
-export const ParamEditor: FC = () => {
+const model = {
+  "paramValues": [
+    { "paramId": 1, "value": "повседневное" },
+    { "paramId": 2, "value": "макси" }
+  ]
+}
 
-  const params = [{ id: 1, name: 'Назначение' }, { id: 2, name: 'Длина' }]
-  const model = [{ id: 1, value: '' }]
-  const [objArr, setValue] = React.useState<Array<{ [key: string]: any }>>([model]);
-  const [obj, setObj] = React.useState<{ [key: string]: any }>(model);
-  const [data, setData] = React.useState(false);
-  const [save, setSave] = React.useState(false);
-  const [input, setInput] = React.useState(false)
-  const change: ChangeEventHandler<HTMLInputElement> = (e) => {
-    setObj({ id: Number(e.target.id), value: e.target.value });
+interface Color {
+  color: string
+}
+interface Param {
+  id: number
+  name: string
+  type?: 'string'
+}
+interface ParamValue {
+  paramId: number
+  value: string
+}
+interface Model {
+  paramValues: ParamValue[]
+  colors?: Color[]
+}
+interface Props {
+  params: Param[]
+  model: Model
+}
+
+const ParamEditor: React.FC<Props> = ({ params, model }) => {
+  const [paramValues, setParamValues] = useState<ParamValue[]>(model.paramValues)
+
+  const handleParamValueChange = (paramId: number, value: string) => {
+    setParamValues(paramValues.map((paramValue) => {
+      if (paramValue.paramId === paramId) {
+        return { ...paramValue, value }
+      }
+      return paramValue;
+    }))
   }
-  const handleEnter: FormEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault()
-    setValue([...objArr, obj])
-    setSave(true)
-    setData(false)
-  }
 
-  const editModel = () => {
-    setData(true);
-    setSave(false)
-    setInput(false)
-  }
-
-  const getModel = () => {
-    setInput(true)
-  }
+  const getModel = (): Model => ({
+    paramValues,
+    colors: model.colors
+  })
 
   return (
-    <div style={{
-      height: '100vh',
-      textAlign: 'center',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
-      {input && <>
-        {objArr.map((item, index) => {
-          if (index !== 0)
-            return <div key={index} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              margin: 5
-            }}><p>{`id: ${item.id}`}</p><p style={{marginLeft: 5}}>{`value: ${item.value}`}</p></div>
-        })}
-        <button onClick={editModel}>Редактировать данные</button>
-      </>}
-      {!input && save && <button onClick={getModel}>Получить данные</button>}
-      {input && <>{objArr.map((item) => {
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          margin: 5
-        }}>
-          <p>{item.id}</p><p>{item.value}</p>
+    <>
+      {params.map((param) => (
+        <div key={param.id}>
+          <label>{param.name}</label>
+          <input
+            type='text'
+            value={paramValues.find((paramValue) => paramValue.paramId === param.id)?.value || ''}
+            onChange={(e) => handleParamValueChange(param.id, e.target.value)}
+          />
         </div>
-      })}</>}
-      {!data && !save && <button onClick={editModel}>Редактировать данные</button>}
-      {data && <form style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'space-between'
-      }} onSubmit={handleEnter}>
-        {params.map((item, index) => {
-          return <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            margin: 5,
-            alignItems: 'center',
-            height: 15
-          }} key={item.id}>
-            <p >{item.name}</p>
-            <input onChange={e => change(e)} id={`${item.id}`}></input>
-          </div>
-        })}
-        <div>
-          <button>Сохранить</button>
-        </div>
-      </form>}
-    </div>
+      ))}
+      <button onClick={() => console.log(getModel())}>Get Model</button>
+    </>
   )
 }
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-root.render(
+ReactDOM.render(
   <React.StrictMode>
-    <ParamEditor />
-  </React.StrictMode>
-);
+    <ParamEditor params={params} model={model} />
+  </React.StrictMode>,
+  document.getElementById('root')
+)
